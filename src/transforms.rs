@@ -38,20 +38,20 @@ pub fn camera(e : Vector3<f32>, g : Vector3<f32>, t : Vector3<f32>) -> Matrix4<f
     m1 * m2
 }
 
-pub fn model_view(e : Vector3<f32>, g : Vector3<f32>, t : Vector3<f32>) -> Matrix4<f32> {
-    let z = (e - g).normalize();
-    let x = t.cross(&z).normalize();
-    let y = z.cross(&x).normalize();
-    let mut minv = Matrix4::<f32>::identity();
-    let mut tr = Matrix4::<f32>::identity();
-    for i in 0..3 {
-        minv[(0,i)] = x[i];
-        minv[(1,i)] = y[i];
-        minv[(2,i)] = z[i];
-        tr[(i,3)] = -g[i];
-    }
-    minv * tr
-}
+// pub fn model_view(e : Vector3<f32>, g : Vector3<f32>, t : Vector3<f32>) -> Matrix4<f32> {
+//     let z = (e - g).normalize();
+//     let x = t.cross(&z).normalize();
+//     let y = z.cross(&x).normalize();
+//     let mut minv = Matrix4::<f32>::identity();
+//     let mut tr = Matrix4::<f32>::identity();
+//     for i in 0..3 {
+//         minv[(0,i)] = x[i];
+//         minv[(1,i)] = y[i];
+//         minv[(2,i)] = z[i];
+//         tr[(i,3)] = -g[i];
+//     }
+//     minv * tr
+// }
 
 // pub fn perspective(fov : f32, aspect_ratio : f32, n : f32, f : f32) -> Matrix4<f32> {
 //     // let t1 = Matrix4::new(1., 0., 0., 0.,
