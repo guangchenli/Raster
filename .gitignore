@@ -1,0 +1,5 @@
+/target
+log.txt
+test.*
+*.png
+/obj
