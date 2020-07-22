@@ -30,19 +30,14 @@ fn main() {
     let mut z_buf = vec![f32::MIN;(width * height) as usize];
 
     let m_vp = transforms::viewport(width, height);
-    let m_per = transforms::perspective(-1., 1., -1., 1., -3., -4.);
-    let t1 = Matrix4::new(1., 0., 0., 0.,
+    let m_per = transforms::perspective(-1., 1., -1., 1., -3., -5.);
+    let model = Matrix4::new(1., 0., 0., 0.,
                 0., 1., 0., 0.,
-                0., 0., 1., -3.,
+                0., 0., 1., -4.,
                 0., 0., 0., 1.);
-    let t2 = Matrix4::new(1., 0., 0., 0.,
-                0., 1., 0., 0.,
-                0., 0., 1., 3.,
-                0., 0., 0., 1.);
-    //let m_ortho = transforms::orthographic(-1., 1., -1., 1., 1., -1.);
-    //let m_per_to_ortho = transforms::persp_to_ortho(3.);
+                
     let m_cam = transforms::camera(e, g, t);
-    let m = m_vp * t2 * m_per * t1 * m_cam;
+    let m = m_vp * m_per * m_cam * model;
 
     render::rasterize(models, &mut img, &texture.unwrap().to_rgb(), &mut z_buf, m);
 
@@ -52,8 +47,6 @@ fn main() {
         if i > z_max {z_max = i}
         if i < z_min && i != f32::MIN {z_min = i}
     }
-
-    //println!("z max {} z min {}", z_max, z_min);
 
     img.save("test.png").unwrap();
 }

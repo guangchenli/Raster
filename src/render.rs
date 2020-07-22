@@ -2,9 +2,6 @@ use image::{Rgb, RgbImage};
 use nalgebra::{Vector2, Vector3, Vector4, Matrix4};
 
 fn baycentric2d(x : f32, y : f32, v : &Vec<Vector4<f32>>) -> Vector3<f32> {
-    // let c1 = (x*(v[1].y - v[2].y) + (v[2].x - v[1].x)*y + v[1].x*v[2].y - v[2].x*v[1].y) / (v[0].x*(v[1].y - v[2].y) + (v[2].x - v[1].x)*v[0].y + v[1].x*v[2].y - v[2].x*v[1].y);
-    // let c2 = (x*(v[2].y - v[0].y) + (v[0].x - v[2].x)*y + v[2].x*v[0].y - v[0].x*v[2].y) / (v[1].x*(v[2].y - v[0].y) + (v[0].x - v[2].x)*v[1].y + v[2].x*v[0].y - v[0].x*v[2].y);
-    // let c3 = (x*(v[0].y - v[1].y) + (v[1].x - v[0].x)*y + v[0].x*v[1].y - v[1].x*v[0].y) / (v[2].x*(v[0].y - v[1].y) + (v[1].x - v[0].x)*v[2].y + v[0].x*v[1].y - v[1].x*v[0].y);
     let c1 = ((v[1].y - v[2].y)*(x - v[2].x) + (v[2].x - v[1].x)*(y - v[2].y)) 
         / ((v[1].y - v[2].y) * (v[0].x - v[2].x) + (v[2].x - v[1].x) * (v[0].y - v[2].y));
     let c2 = ((v[2].y - v[0].y)*(x - v[2].x) + (v[0].x - v[2].x)*(y - v[2].y)) 
@@ -50,8 +47,6 @@ fn rasterize_triangle(vs : Vec<Vector4<f32>>, vts : Vec<Vector2<f32>>, z_buffer 
         }
     }
 
-    //println!("minx {} maxx {} miny {} maxy {}", bbmin[0], bbmin[1], bbmax[0], bbmax[1]);
-
     if bbmin[0] < 0. {bbmin[0] = 0.}
     if bbmin[1] < 0. {bbmin[1] = 0.}
     if bbmax[0] < 0. {bbmax[0] = 0.}
@@ -64,19 +59,18 @@ fn rasterize_triangle(vs : Vec<Vector4<f32>>, vts : Vec<Vector2<f32>>, z_buffer 
             let x_proper = x as f32 + 0.5;
             let y_proper = y as f32 + 0.5;
             let bc = baycentric2d(x_proper, y_proper, &vs);
+            let reci = bc.x * 1. * vs[0].w + bc.y * 1. * vs[1].w + bc.z * 1. * vs[2].w;
             // Not in triangle
             if !in_triangle(x_proper, y_proper, &vs) || x * y > img.width() * img.height() {
                 continue;
             }
             // In triangle
             // Get interpolated z value
-            let z_interpolated = bc.x * vs[0].z + bc.y * vs[1].z + bc.z * vs[2].z;
-            if z_interpolated < 0. {continue};
-            //let z_interpolated = w_reciprocal / (bc.x * vs[0].z + bc.y * vs[1].z + bc.z * vs[2].z);
+            let z_interpolated = (bc.x * vs[0].z * vs[0].w + bc.y * vs[1].z * vs[1].w + bc.z * vs[2].z * vs[2].w) / reci;
+            if z_interpolated > 1. || z_interpolated < -1. {continue};
             let z_buffer_idx = (x + y * img.width()) as usize;
             let u_s = bc.x * vts[0].x * vs[0].w + bc.y * vts[1].x * vs[1].w + bc.z * vts[2].x * vs[2].w;
             let v_s = bc.x * vts[0].y * vs[0].w + bc.y * vts[1].y * vs[1].w + bc.z * vts[2].y * vs[2].w;
-            let reci = bc.x * 1. * vs[0].w + bc.y * 1. * vs[1].w + bc.z * 1. * vs[2].w;
             let u = u_s / reci;
             let v = v_s / reci;
             let tx = (u * tex.width() as f32) as u32;
