@@ -1,6 +1,3 @@
-extern crate image;
-extern crate tobj;
-
 mod render;
 mod transforms;
 
@@ -10,12 +7,17 @@ use std::env;
 
 fn main() {
     let args : Vec<String> = env::args().collect();
+    if env::args().len() != 3 {
+        println!("Expecting 2 arguments, exiting...");
+        return
+    }
     let obj_path = &args[1];
     let tex_path = &args[2];
 
-    let width = 800;
-    let height = 800;
+    let width = 1000;
+    let height = 1000;
 
+    // eye, gaze, top
     let e = Vector3::new(0., 0., 0.);
     let g = Vector3::new(0., 0., -1.);
     let t = Vector3::new(0., 1., 0.);
@@ -25,21 +27,22 @@ fn main() {
     assert!(obj.is_ok());
     let texture = image::open(tex_path);
     assert!(texture.is_ok());
-    let (models, _) = obj.unwrap();
+    let (obj, _) = obj.unwrap();
+    let texture = texture.unwrap().to_rgb();
 
     let mut z_buf = vec![f32::MIN;(width * height) as usize];
 
     let m_vp = transforms::viewport(width, height);
     let m_per = transforms::perspective(-1., 1., -1., 1., -3., -5.);
-    let model = Matrix4::new(1., 0., 0., 0.,
+    let model = Matrix4::new(1., 0., 0., -0.9,
                 0., 1., 0., 0.,
                 0., 0., 1., -4.,
                 0., 0., 0., 1.);
-                
     let m_cam = transforms::camera(e, g, t);
+
     let m = m_vp * m_per * m_cam * model;
 
-    render::rasterize(models, &mut img, &texture.unwrap().to_rgb(), &mut z_buf, m);
+    render::rasterize(obj, &mut img, &texture, &mut z_buf, m);
 
     let mut z_max = f32::MIN;
     let mut z_min = f32::MAX;

@@ -2,16 +2,22 @@
 
 This is a toy software rasterizer I wrote to learn how rasterization works.
 
-Features:
-- z-buffering
-- perspective corrext texture mapping
+Current Features:
+- Z-buffering
+- Perspective corrext texture mapping
+
+TODO List:
+- Add Blinn-Phong Shading
+- Add tangent space normal mapping
+- Add shadow mapping
+- Add resource manager
 
 ## Build
 ```
 cargo build
 ```
 
-## Run the Program
+## Usage
 ```
 cargo run <obj_model> <tga_texture>
 ```
