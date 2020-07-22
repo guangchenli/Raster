@@ -67,7 +67,7 @@ fn rasterize_triangle(vs : Vec<Vector4<f32>>, vts : Vec<Vector2<f32>>, z_buffer 
           let x_proper = x as f32 + 0.5;
           let y_proper = y as f32 + 0.5;
           let bc = baycentric2d(x_proper, y_proper, &vs);
-          let reci = bc.x * 1. * vs[0].w + bc.y * 1. * vs[1].w + bc.z * 1. * vs[2].w;
+          let reci = bc.x * vs[0].w + bc.y * vs[1].w + bc.z * vs[2].w;
           // Not in triangle
           if bc[0] < 0. || bc[1] < 0. || bc[2] < 0. || x * y > img.width() * img.height() {
               continue;

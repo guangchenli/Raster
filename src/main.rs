@@ -34,7 +34,7 @@ fn main() {
 
     let m_vp = transforms::viewport(width, height);
     let m_per = transforms::perspective(-1., 1., -1., 1., -3., -5.);
-    let model = Matrix4::new(1., 0., 0., -0.9,
+    let model = Matrix4::new(1., 0., 0., 0.,
                 0., 1., 0., 0.,
                 0., 0., 1., -4.,
                 0., 0., 0., 1.);
