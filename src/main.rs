@@ -40,13 +40,10 @@ fn main() {
                 0., 0., 1., -4.,
                 0., 0., 0., 1.);
     let m_cam = transforms::camera(e, g, t);
-
     let m = m_vp * m_per * m_cam * model;
 
     let mesh = obj.remove(0).mesh;
-
     let len = mesh.indices.len() / 3;
-
     let id = mesh.indices;
     let pos = mesh.positions;
     let texcoords = mesh.texcoords;
@@ -62,13 +59,6 @@ fn main() {
     });
 
     render::rasterize(len, &s, &mut z_buf, &mut img);
-
-    let mut z_max = f32::MIN;
-    let mut z_min = f32::MAX;
-    for i in z_buf {
-        if i > z_max {z_max = i}
-        if i < z_min && i != f32::MIN {z_min = i}
-    }
 
     img.save("test.png").unwrap();
 }

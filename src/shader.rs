@@ -57,8 +57,8 @@ impl Shader for VanillaShader {
         };
         let w_reci = bc.0 * ws.0 + bc.1 * ws.1 + bc.2 * ws.2;
         let (u, v) = interpolate_tex(bc, ws, (uv0, uv1, uv2), w_reci);
-        let tx = (u * self.diffuse_width as f32) as u32;
-        let ty = self.diffuse_height - ((v * self.diffuse_height as f32) as u32) - 1;
+        let tx = (u * (self.diffuse_width - 1) as f32) as u32;
+        let ty = self.diffuse_height - (f32::round(v * (self.diffuse_height - 1) as f32) as u32) - 1;
         let color = self.diffuse.get_pixel(tx, ty);
         (Rgb([color[0],color[1],color[2]]), false)
     }
