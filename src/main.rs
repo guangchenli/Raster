@@ -1,5 +1,6 @@
 mod render;
 mod transforms;
+mod shader;
 
 use image::{ImageBuffer, RgbImage};
 use nalgebra::{Vector3, Matrix4};
@@ -12,7 +13,7 @@ fn main() {
         return
     }
     let obj_path = &args[1];
-    let tex_path = &args[2];
+    let diffuse_path = &args[2];
 
     let width = 1000;
     let height = 1000;
@@ -25,10 +26,10 @@ fn main() {
     let mut img : RgbImage = ImageBuffer::new(width, height);
     let obj = tobj::load_obj(obj_path, true);
     assert!(obj.is_ok());
-    let texture = image::open(tex_path);
-    assert!(texture.is_ok());
-    let (obj, _) = obj.unwrap();
-    let texture = texture.unwrap().to_rgb();
+    let diffuse = image::open(diffuse_path);
+    assert!(diffuse.is_ok());
+    let mut obj = obj.unwrap().0;
+    let diffuse = diffuse.unwrap().to_rgb();
 
     let mut z_buf = vec![f32::MIN;(width * height) as usize];
 
@@ -42,7 +43,25 @@ fn main() {
 
     let m = m_vp * m_per * m_cam * model;
 
-    render::rasterize(obj, &mut img, &texture, &mut z_buf, m);
+    let mesh = obj.remove(0).mesh;
+
+    let len = mesh.indices.len() / 3;
+
+    let id = mesh.indices;
+    let pos = mesh.positions;
+    let texcoords = mesh.texcoords;
+
+    let s : Box<dyn shader::Shader> = Box::new(shader::VanillaShader {
+        m : m,
+        indices : id,
+        positions : pos,
+        texcoords : texcoords,
+        diffuse_width : diffuse.width(),
+        diffuse_height : diffuse.height(),
+        diffuse : diffuse,
+    });
+
+    render::rasterize(len, &s, &mut z_buf, &mut img);
 
     let mut z_max = f32::MIN;
     let mut z_min = f32::MAX;
