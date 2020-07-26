@@ -47,8 +47,20 @@ fn main() {
     let id = mesh.indices;
     let pos = mesh.positions;
     let texcoords = mesh.texcoords;
+    let normals = mesh.normals;
+    let light_source = vec!((Vector3::new(-1., -1., 1.), 0.7));
 
-    let s : Box<dyn shader::Shader> = Box::new(shader::VanillaShader {
+    // let s : Box<dyn shader::Shader> = Box::new(shader::VanillaShader {
+    //     m : m,
+    //     indices : id,
+    //     positions : pos,
+    //     texcoords : texcoords,
+    //     diffuse_width : diffuse.width(),
+    //     diffuse_height : diffuse.height(),
+    //     diffuse : diffuse,
+    // });
+    
+    let s_l : Box<dyn shader::Shader> = Box::new(shader::GouraudShader {
         m : m,
         indices : id,
         positions : pos,
@@ -56,9 +68,12 @@ fn main() {
         diffuse_width : diffuse.width(),
         diffuse_height : diffuse.height(),
         diffuse : diffuse,
+        normals : normals,
+        ambient : 0.3,
+        light_source : light_source
     });
 
-    render::rasterize(len, &s, &mut z_buf, &mut img);
+    render::rasterize(len, &s_l, &mut z_buf, &mut img);
 
     img.save("test.png").unwrap();
 }

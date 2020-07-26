@@ -1,6 +1,6 @@
-use image::{Rgb, RgbImage};
+use image::{RgbImage};
 use nalgebra::{Vector2, Vector4};
-use super::shader::{Shader, VertexAttrb};
+use super::shader::{Shader, VertexAttr};
 
 fn baycentric2d(x : f32, y : f32, v : (Vector4<f32>, Vector4<f32>, Vector4<f32>)) -> (f32, f32, f32) {
     let c1 = ((v.1.y - v.2.y)*(x - v.2.x) + (v.2.x - v.1.x)*(y - v.2.y)) 
@@ -11,7 +11,7 @@ fn baycentric2d(x : f32, y : f32, v : (Vector4<f32>, Vector4<f32>, Vector4<f32>)
     (c1, c2, c3)
 }
 
-fn rasterize_triangle(vs : [(Vector4<f32>, Vec<VertexAttrb>); 3], shader : &Box<dyn Shader>, z_buffer : &mut Vec<f32>, img : &mut RgbImage) {
+fn rasterize_triangle(vs : [(Vector4<f32>, Vec<VertexAttr>); 3], shader : &Box<dyn Shader>, z_buffer : &mut Vec<f32>, img : &mut RgbImage) {
 
     let img_bound = Vector2::new(img.width() as f32, img.height() as f32);
     let mut bbmin = Vector2::new(img_bound[0] - 1., img_bound[1] - 1.);
@@ -66,7 +66,7 @@ fn rasterize_triangle(vs : [(Vector4<f32>, Vec<VertexAttrb>); 3], shader : &Box<
             if z_buffer[z_buffer_idx]  < z_interpolated {
                 z_buffer[z_buffer_idx] = z_interpolated;
                 // flip y value here
-                img.put_pixel(x as u32, img.height() - y - 1 as u32, Rgb([color[0],color[1],color[2]]));
+                img.put_pixel(x as u32, img.height() - y - 1 as u32, color);
             }
         }
     } 
