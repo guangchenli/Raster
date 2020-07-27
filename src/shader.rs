@@ -1,8 +1,8 @@
-use nalgebra::{Vector3, Vector4, Matrix4};
+use nalgebra::{Vector3, Vector4, Matrix3, Matrix4};
 use image::{Rgb, RgbImage};
 
 macro_rules! unwrap_vertex_attr_1f {
-    ($v : expr, $t : ident, $c : ident, $msg : literal) => {
+    ($v : expr, $t : ident, $c : ident, $msg : ident) => {
         match $v {
             $t::$c(val) => val,
             _ => panic!($msg)
@@ -11,7 +11,7 @@ macro_rules! unwrap_vertex_attr_1f {
 }
 
 macro_rules! unwrap_vertex_attr_2f {
-    ($v : expr, $t : ident, $c : ident, $msg : literal) => {
+    ($v : expr, $t : ident, $c : ident, $msg : ident) => {
         match $v {
             $t::$c(v1, v2) => (v1, v2),
             _ => panic!($msg)
@@ -57,43 +57,46 @@ fn calc_gouraud_color(li_int : f32, ambient : f32, rgb : &Rgb<u8>) -> Rgb<u8> {
     clamp(r, g, b)
 }
 
-pub struct VanillaShader {
-    pub m : Matrix4<f32>,
-    pub indices :  Vec<u32>,
-    pub positions : Vec<f32>,
-    pub texcoords : Vec<f32>,
-    pub diffuse_height : u32,
-    pub diffuse_width : u32,
-    pub diffuse : RgbImage
-}
+// pub struct VanillaShader {
+//     pub m : Matrix4<f32>,
+//     pub indices :  Vec<u32>,
+//     pub positions : Vec<f32>,
+//     pub texcoords : Vec<f32>,
+//     pub diffuse_height : u32,
+//     pub diffuse_width : u32,
+//     pub diffuse : RgbImage
+// }
 
-impl Shader for VanillaShader {
+// impl Shader for VanillaShader {
 
-    fn vertex(&self, t : u32, v: u32) -> (Vector4<f32>, Vec<VertexAttr>) {
-        let id = self.indices[(t * 3 + v) as usize] as usize;
-        let vert = Vector4::new(self.positions[id*3], self.positions[id*3+1], self.positions[id*3+2], 1.);
-        let tc = VertexAttr::TextureCoord(self.texcoords[id*2], self.texcoords[id*2 + 1]);
-        let v = self.m * vert;
-        let v = Vector4::new(v.x / v.w, v.y / v.w, v.z / v.w, 1. / v.w);
-        (v, vec!(tc))
-    }
+//     fn vertex(&self, t : u32, v: u32) -> (Vector4<f32>, Vec<VertexAttr>) {
+//         let id = self.indices[(t * 3 + v) as usize] as usize;
+//         let vert = Vector4::new(self.positions[id*3], self.positions[id*3+1], self.positions[id*3+2], 1.);
+//         let tc = VertexAttr::TextureCoord(self.texcoords[id*2], self.texcoords[id*2 + 1]);
+//         let v = self.m * vert;
+//         let v = Vector4::new(v.x / v.w, v.y / v.w, v.z / v.w, 1. / v.w);
+//         (v, vec!(tc))
+//     }
 
-    fn fragment(&self, bc: (f32, f32, f32), ws : (f32, f32, f32), attrs : (&Vec<VertexAttr>, &Vec<VertexAttr>, &Vec<VertexAttr>)) -> (Rgb<u8>, bool) {
-        let uv0 = unwrap_vertex_attr_2f!(attrs.0[0], VertexAttr, TextureCoord, "Expecting TextureCoord!");
-        let uv1 = unwrap_vertex_attr_2f!(attrs.1[0], VertexAttr, TextureCoord, "Expecting TextureCoord!");
-        let uv2 = unwrap_vertex_attr_2f!(attrs.2[0], VertexAttr, TextureCoord, "Expecting TextureCoord!");
-        let w_reci = bc.0 * ws.0 + bc.1 * ws.1 + bc.2 * ws.2;
-        let (u, v) = interpolate_tex(bc, ws, (uv0, uv1, uv2), w_reci);
-        let tx = (u * (self.diffuse_width - 1) as f32) as u32;
-        let ty = self.diffuse_height - (f32::round(v * (self.diffuse_height - 1) as f32) as u32) - 1;
-        let color = self.diffuse.get_pixel(tx, ty);
-        (Rgb([color[0],color[1],color[2]]), false)
-    }
+//     fn fragment(&self, bc: (f32, f32, f32), ws : (f32, f32, f32), attrs : (&Vec<VertexAttr>, &Vec<VertexAttr>, &Vec<VertexAttr>)) -> (Rgb<u8>, bool) {
+//         let uv0 = unwrap_vertex_attr_2f!(attrs.0[0], VertexAttr, TextureCoord, "Expecting TextureCoord!");
+//         let uv1 = unwrap_vertex_attr_2f!(attrs.1[0], VertexAttr, TextureCoord, "Expecting TextureCoord!");
+//         let uv2 = unwrap_vertex_attr_2f!(attrs.2[0], VertexAttr, TextureCoord, "Expecting TextureCoord!");
+//         let w_reci = bc.0 * ws.0 + bc.1 * ws.1 + bc.2 * ws.2;
+//         let (u, v) = interpolate_tex(bc, ws, (uv0, uv1, uv2), w_reci);
+//         let tx = (u * (self.diffuse_width - 1) as f32) as u32;
+//         let ty = self.diffuse_height - (f32::round(v * (self.diffuse_height - 1) as f32) as u32) - 1;
+//         let color = self.diffuse.get_pixel(tx, ty);
+//         (Rgb([color[0],color[1],color[2]]), false)
+//     }
 
-}
+// }
 
+
+// An implementation of GauraudShader
 pub struct GouraudShader<'a> {
-    pub m : Matrix4<f32>,
+    pub mvp : Matrix4<f32>,
+    pub model : Matrix3<f32>,
     pub indices : &'a Vec<u32>,
     pub positions : &'a Vec<f32>,
     pub texcoords : &'a Vec<f32>,
@@ -105,14 +108,14 @@ pub struct GouraudShader<'a> {
     pub ambient : f32
 }
 
-// WARNIMG!: This Gouraud shader is wrong, it does not count model transformation
-// Only for test purpose
 impl<'a> Shader for GouraudShader<'a> {
 
     fn vertex(&self, t : u32, v: u32) -> (Vector4<f32>, Vec<VertexAttr>) {
         let idx = self.indices[(t * 3 + v) as usize] as usize;
+        // calculate normal vector
         // model in left hand coord, flip x y z val
         let n = Vector3::new(-self.normals[idx*3], -self.normals[idx*3+1], -self.normals[idx*3+2]);
+        let n = (self.model * n).normalize();
         let v = Vector4::new(self.positions[idx*3], self.positions[idx*3+1], self.positions[idx*3+2], 1.);
         // calculate light intensity
         let mut vert_intensity = 0.;
@@ -121,18 +124,20 @@ impl<'a> Shader for GouraudShader<'a> {
         }
         let vert_intensity = VertexAttr::LightIntensity(vert_intensity);
         let tc = VertexAttr::TextureCoord(self.texcoords[idx*2], self.texcoords[idx*2 + 1]);
-        let v = self.m * v;
+        let v = self.mvp * v;
         let v = Vector4::new(v.x / v.w, v.y / v.w, v.z / v.w, 1. / v.w);
         (v, vec!(tc, vert_intensity))
     }
 
     fn fragment(&self, bc: (f32, f32, f32), ws : (f32, f32, f32), attrs : (&Vec<VertexAttr>, &Vec<VertexAttr>, &Vec<VertexAttr>)) -> (Rgb<u8>, bool) {
-        let uv0 = unwrap_vertex_attr_2f!(attrs.0[0], VertexAttr, TextureCoord, "Expecting TextureCoord!");
-        let uv1 = unwrap_vertex_attr_2f!(attrs.1[0], VertexAttr, TextureCoord, "Expecting TextureCoord!");
-        let uv2 = unwrap_vertex_attr_2f!(attrs.2[0], VertexAttr, TextureCoord, "Expecting TextureCoord!");
-        let li_int_v0 = unwrap_vertex_attr_1f!(attrs.0[1], VertexAttr, LightIntensity, "Expecting LightIntensity!");
-        let li_int_v1 = unwrap_vertex_attr_1f!(attrs.1[1], VertexAttr, LightIntensity, "Expecting LightIntensity!");
-        let li_int_v2 = unwrap_vertex_attr_1f!(attrs.2[1], VertexAttr, LightIntensity, "Expecting LightIntensity!");
+        let msg_texcoord = "Expecting TextureCoord!";
+        let msg_li_int = "Expecting LightIntensity!";
+        let uv0 = unwrap_vertex_attr_2f!(attrs.0[0], VertexAttr, TextureCoord, msg_texcoord);
+        let uv1 = unwrap_vertex_attr_2f!(attrs.1[0], VertexAttr, TextureCoord, msg_texcoord);
+        let uv2 = unwrap_vertex_attr_2f!(attrs.2[0], VertexAttr, TextureCoord, msg_texcoord);
+        let li_int_v0 = unwrap_vertex_attr_1f!(attrs.0[1], VertexAttr, LightIntensity, msg_li_int);
+        let li_int_v1 = unwrap_vertex_attr_1f!(attrs.1[1], VertexAttr, LightIntensity, msg_li_int);
+        let li_int_v2 = unwrap_vertex_attr_1f!(attrs.2[1], VertexAttr, LightIntensity, msg_li_int);
         let w_reci = bc.0 * ws.0 + bc.1 * ws.1 + bc.2 * ws.2;
         let (u, v) = interpolate_tex(bc, ws, (uv0, uv1, uv2), w_reci);
         let li_int = interpolate_one_attr(bc, ws, (li_int_v0, li_int_v1, li_int_v2), w_reci);

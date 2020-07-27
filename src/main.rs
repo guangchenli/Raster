@@ -3,7 +3,7 @@ mod transforms;
 mod shader;
 
 use image::{ImageBuffer, RgbImage};
-use nalgebra::{Vector3, Matrix4};
+use nalgebra::{Vector3, Matrix4, Matrix3};
 use std::env;
 
 fn main() {
@@ -35,21 +35,23 @@ fn main() {
 
     let m_vp = transforms::viewport(width, height);
     let m_per = transforms::perspective(-1., 1., -1., 1., -3., -5.);
-    let model = Matrix4::new(1., 0., 0., 0.,
+    let model_affine = Matrix4::new(1., 0., 0., 0.,
                 0., 1., 0., 0.,
                 0., 0., 1., -4.,
                 0., 0., 0., 1.);
+    let model = Matrix3::new(1., 0., 0.,
+                0., 1., 0.,
+                0., 0., 1.);
     let m_cam = transforms::camera(e, g, t);
-    let m = m_vp * m_per * m_cam * model;
+    let m = m_vp * m_per * m_cam * model_affine;
 
-    //let mesh = &obj[0].mesh;
     {let len = obj[0].mesh.indices.len() / 3;
     let mesh = &obj[0].mesh;
     let id = &mesh.indices;
     let pos = &mesh.positions;
     let texcoords = &mesh.texcoords;
     let normals = &mesh.normals;
-    let light_source = vec!((Vector3::new(1., 0., -1.), 0.));
+    let light_source = vec!((Vector3::new(1., 0., -1.), 0.8));
 
     // let s : Box<dyn shader::Shader> = Box::new(shader::VanillaShader {
     //     m : m,
@@ -62,7 +64,8 @@ fn main() {
     // });
     
     let s_l = shader::GouraudShader {
-        m : m,
+        mvp : m,
+        model : model,
         indices : id,
         positions : pos,
         texcoords : texcoords,
@@ -70,7 +73,7 @@ fn main() {
         diffuse_height : diffuse.height(),
         diffuse : diffuse,
         normals : normals,
-        ambient : 1.,
+        ambient : 0.2,
         light_source : &light_source
     };
 
