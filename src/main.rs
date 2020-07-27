@@ -28,7 +28,7 @@ fn main() {
     assert!(obj.is_ok());
     let diffuse = image::open(diffuse_path);
     assert!(diffuse.is_ok());
-    let mut obj = obj.unwrap().0;
+    let (obj, _) = obj.unwrap();
     let diffuse = diffuse.unwrap().to_rgb();
 
     let mut z_buf = vec![f32::MIN;(width * height) as usize];
@@ -42,13 +42,14 @@ fn main() {
     let m_cam = transforms::camera(e, g, t);
     let m = m_vp * m_per * m_cam * model;
 
-    let mesh = obj.remove(0).mesh;
-    let len = mesh.indices.len() / 3;
-    let id = mesh.indices;
-    let pos = mesh.positions;
-    let texcoords = mesh.texcoords;
-    let normals = mesh.normals;
-    let light_source = vec!((Vector3::new(-1., -1., 1.), 0.7));
+    //let mesh = &obj[0].mesh;
+    {let len = obj[0].mesh.indices.len() / 3;
+    let mesh = &obj[0].mesh;
+    let id = &mesh.indices;
+    let pos = &mesh.positions;
+    let texcoords = &mesh.texcoords;
+    let normals = &mesh.normals;
+    let light_source = vec!((Vector3::new(1., 0., -1.), 0.));
 
     // let s : Box<dyn shader::Shader> = Box::new(shader::VanillaShader {
     //     m : m,
@@ -60,7 +61,7 @@ fn main() {
     //     diffuse : diffuse,
     // });
     
-    let s_l : Box<dyn shader::Shader> = Box::new(shader::GouraudShader {
+    let s_l = shader::GouraudShader {
         m : m,
         indices : id,
         positions : pos,
@@ -69,11 +70,13 @@ fn main() {
         diffuse_height : diffuse.height(),
         diffuse : diffuse,
         normals : normals,
-        ambient : 0.3,
-        light_source : light_source
-    });
+        ambient : 1.,
+        light_source : &light_source
+    };
 
-    render::rasterize(len, &s_l, &mut z_buf, &mut img);
+    let b : Box<dyn shader::Shader> = Box::new(s_l);
 
-    img.save("test.png").unwrap();
+    render::rasterize(len, &b, &mut z_buf, &mut img);
+}
+    img.save("out.png").unwrap();
 }

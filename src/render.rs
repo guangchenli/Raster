@@ -11,7 +11,7 @@ fn baycentric2d(x : f32, y : f32, v : (Vector4<f32>, Vector4<f32>, Vector4<f32>)
     (c1, c2, c3)
 }
 
-fn rasterize_triangle(vs : [(Vector4<f32>, Vec<VertexAttr>); 3], shader : &Box<dyn Shader>, z_buffer : &mut Vec<f32>, img : &mut RgbImage) {
+fn rasterize_triangle<'a>(vs : [(Vector4<f32>, Vec<VertexAttr>); 3], shader : &Box<dyn Shader + 'a>, z_buffer : &mut Vec<f32>, img : &mut RgbImage) {
 
     let img_bound = Vector2::new(img.width() as f32, img.height() as f32);
     let mut bbmin = Vector2::new(img_bound[0] - 1., img_bound[1] - 1.);
@@ -61,9 +61,9 @@ fn rasterize_triangle(vs : [(Vector4<f32>, Vec<VertexAttr>); 3], shader : &Box<d
             if z_interpolated > 1. || z_interpolated < -1. {continue};
             let z_buffer_idx = (x + y * img.width()) as usize;
             
-            let (color, _drop) = (*shader).fragment(bc, (vs[0].0.w, vs[1].0.w, vs[2].0.w), (&vs[0].1, &vs[1].1, &vs[2].1));
+            let (color, drop) = (*shader).fragment(bc, (vs[0].0.w, vs[1].0.w, vs[2].0.w), (&vs[0].1, &vs[1].1, &vs[2].1));
 
-            if z_buffer[z_buffer_idx]  < z_interpolated {
+            if z_buffer[z_buffer_idx]  < z_interpolated && !drop {
                 z_buffer[z_buffer_idx] = z_interpolated;
                 // flip y value here
                 img.put_pixel(x as u32, img.height() - y - 1 as u32, color);
@@ -72,7 +72,7 @@ fn rasterize_triangle(vs : [(Vector4<f32>, Vec<VertexAttr>); 3], shader : &Box<d
     } 
 }
 
-pub fn rasterize(len : usize, shader : &Box<dyn Shader>, z_buf : &mut Vec<f32>, img : &mut RgbImage) {
+pub fn rasterize<'a>(len : usize, shader : &Box<dyn Shader + 'a>, z_buf : &mut Vec<f32>, img : &mut RgbImage) {
     for i in 0..len {
         let v0 = (*shader).vertex(i as u32, 0);
         let v1 = (*shader).vertex(i as u32, 1);

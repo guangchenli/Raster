@@ -92,26 +92,27 @@ impl Shader for VanillaShader {
 
 }
 
-pub struct GouraudShader {
+pub struct GouraudShader<'a> {
     pub m : Matrix4<f32>,
-    pub indices :  Vec<u32>,
-    pub positions : Vec<f32>,
-    pub texcoords : Vec<f32>,
-    pub normals : Vec<f32>,
+    pub indices : &'a Vec<u32>,
+    pub positions : &'a Vec<f32>,
+    pub texcoords : &'a Vec<f32>,
+    pub normals : &'a Vec<f32>,
     pub diffuse_height : u32,
     pub diffuse_width : u32,
     pub diffuse : RgbImage,
-    pub light_source : Vec<(Vector3<f32>, f32)>,
+    pub light_source : &'a Vec<(Vector3<f32>, f32)>,
     pub ambient : f32
 }
 
 // WARNIMG!: This Gouraud shader is wrong, it does not count model transformation
 // Only for test purpose
-impl Shader for GouraudShader {
+impl<'a> Shader for GouraudShader<'a> {
 
     fn vertex(&self, t : u32, v: u32) -> (Vector4<f32>, Vec<VertexAttr>) {
         let idx = self.indices[(t * 3 + v) as usize] as usize;
-        let n = Vector3::new(self.normals[idx*3], self.normals[idx*3+1], self.normals[idx*3+2]);
+        // model in left hand coord, flip x y z val
+        let n = Vector3::new(-self.normals[idx*3], -self.normals[idx*3+1], -self.normals[idx*3+2]);
         let v = Vector4::new(self.positions[idx*3], self.positions[idx*3+1], self.positions[idx*3+2], 1.);
         // calculate light intensity
         let mut vert_intensity = 0.;
