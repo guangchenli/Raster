@@ -21,5 +21,5 @@ cargo build
 
 ## Usage
 ```
-cargo run <obj_model> <tga_texture>
+cargo run <obj_model> <diffuse_texture> <spec_texture>
 ```
