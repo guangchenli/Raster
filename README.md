@@ -7,9 +7,9 @@ Current Features:
 - Perspective corrext texture mapping
 - Programmable vertex & fragment shader
 - Gouraud shading
+- Blinn-Phong shading
 
 TODO List:
-- Add Blinn-Phong Shading
 - Add tangent space normal mapping
 - Add shadow mapping
 - Add resource manager
