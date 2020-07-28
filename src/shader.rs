@@ -159,6 +159,7 @@ impl<'a> Shader for GouraudShader<'a> {
 pub struct BlinnPhongShader<'a> {
     pub mvp : Matrix4<f32>,
     pub model : Matrix3<f32>,
+    pub e : Vector3<f32>,
     pub indices : &'a Vec<u32>,
     pub positions : &'a Vec<f32>,
     pub texcoords : &'a Vec<f32>,
@@ -179,16 +180,16 @@ impl<'a> Shader for BlinnPhongShader<'a> {
         let n = Vector3::new(-self.normals[idx*3], -self.normals[idx*3+1], -self.normals[idx*3+2]);
         let n = (self.model * n).normalize();
         let v = Vector4::new(self.positions[idx*3], self.positions[idx*3+1], self.positions[idx*3+2], 1.);
-        let v_dh = Vector3::new(v.x, v.y, v.z).normalize();
         // calculate diffuse and specular light intensity
         let mut diffuse_intensity = 0.;
         let mut spec_intensity = 0.;
         for (li_dir, intensity) in self.light_source.iter() {
-            let l = li_dir.normalize();
-            let h = (v_dh + l).normalize();
+            let l = li_dir;
+            let h = (self.e + -l).normalize();
             diffuse_intensity += n.dot(&l).max(0.) * intensity;
-            spec_intensity += (n.dot(&h).max(0.) * intensity).powf(self.phong_exp);
+            spec_intensity += h.dot(&n).abs().powf(self.phong_exp) * intensity;
         }
+        //println!("{}", spec_intensity);
         let diffuse_intensity = VertexAttr::LightIntensity(diffuse_intensity);
         let spec_intensity = VertexAttr::LightIntensity(spec_intensity);
         let tc = VertexAttr::TextureCoord(self.texcoords[idx*2], self.texcoords[idx*2 + 1]);

@@ -82,6 +82,7 @@ fn main() {
     let s_l = shader::BlinnPhongShader {
         mvp : m,
         model : model,
+        e : -g,
         indices : id,
         positions : pos,
         texcoords : texcoords,
@@ -90,7 +91,7 @@ fn main() {
         normals : normals,
         ambient : 0.2,
         light_source : &light_source,
-        phong_exp : 1.
+        phong_exp : 2.
     };
 
     let b : Box<dyn shader::Shader> = Box::new(s_l);
