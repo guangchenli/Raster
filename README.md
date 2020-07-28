@@ -15,11 +15,13 @@ TODO List:
 - Add resource manager
 
 ## Build
+First make sure that you have [Cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html) installed, then simply run:
 ```
 cargo build
 ```
-
+on your terminal.
 ## Usage
+Model must be in Wavefront obj format, make sure that your model includes tangent vector of each vertex.
 ```
 cargo run <obj_model> <diffuse_texture> <spec_texture>
 ```
